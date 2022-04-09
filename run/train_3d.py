@@ -47,7 +47,7 @@ def get_optimizer(model):
     lr = config.TRAIN.LR
     if model.module.backbone is not None:
         for params in model.module.backbone.parameters():
-            params.requires_grad = False   # If you want to train the whole model jointly, set it to be True.
+            params.requires_grad = True   # If you want to train the whole model jointly, set it to be True.
     for params in model.module.root_net.parameters():
         params.requires_grad = True
     for params in model.module.pose_net.parameters():
