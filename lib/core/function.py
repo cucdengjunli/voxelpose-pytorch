@@ -17,7 +17,7 @@ from utils.vis import save_debug_3d_cubes
 logger = logging.getLogger(__name__)
 
 
-def train_3d(config, model, optimizer, loader, epoch, output_dir, writer_dict, device=torch.device('cuda'), dtype=torch.float):
+def train_3d(config, config_t, model, optimizer, loader, loader_t, epoch, output_dir, writer_dict, device=torch.device('cuda'), dtype=torch.float):
     batch_time = AverageMeter()
     data_time = AverageMeter()
     losses = AverageMeter()
@@ -34,17 +34,33 @@ def train_3d(config, model, optimizer, loader, epoch, output_dir, writer_dict, d
     accu_loss_3d = 0
 
     end = time.time()
-    for i, (inputs, targets_2d, weights_2d, targets_3d, meta, input_heatmap) in enumerate(loader):
+    
+    i = -1
+    
+    for (inputs, targets_2d, weights_2d, targets_3d, meta, input_heatmap), (inputs_t, meta_t) in zip(loader, loader_t):
+        
+        i += 1
         data_time.update(time.time() - end)
 
-        if 'panoptic' in config.DATASET.TEST_DATASET:
-            pred, heatmaps, grid_centers, loss_2d, loss_3d, loss_cord = model(views=inputs, meta=meta,
-                                                                              targets_2d=targets_2d,
-                                                                              weights_2d=weights_2d,
-                                                                              targets_3d=targets_3d[0])
-        elif 'campus' in config.DATASET.TEST_DATASET or 'shelf' in config.DATASET.TEST_DATASET:
-            pred, heatmaps, grid_centers, loss_2d, loss_3d, loss_cord = model(meta=meta, targets_3d=targets_3d[0],
-                                                                              input_heatmaps=input_heatmap)
+        pred, heatmaps, grid_centers, loss_2d, loss_3d, loss_cord, features_s, features_t = model(views=inputs, views_t=inputs_t, meta=meta,
+                                                                                                  targets_2d=targets_2d,
+                                                                                                  weights_2d=weights_2d,
+                                                                                                  targets_3d=targets_3d[0])
+        
+        print('features_s[0].shape:', features_s[0].shape)
+        print('features_t[0].shape:', features_t[0].shape)
+        print('features_s[1].shape:', features_s[1].shape)
+        print('features_t[1].shape:', features_t[1].shape)
+        print('features_s[2].shape:', features_s[2].shape)
+        print('features_t[2].shape:', features_t[2].shape)
+        # print('heatmaps.tyoe():', heatmaps.type())
+
+
+
+        print('len features_s:', len(features_s)) # 4
+        print('len features_t:', len(features_t))# 3
+        
+        
 
         loss_2d = loss_2d.mean()
         loss_3d = loss_3d.mean()
@@ -56,6 +72,8 @@ def train_3d(config, model, optimizer, loader, epoch, output_dir, writer_dict, d
         loss = loss_2d + loss_3d + loss_cord
         losses.update(loss.item())
 
+        # todo: 加上loss 域loss
+        
         if loss_cord > 0:
             optimizer.zero_grad()
             (loss_2d + loss_cord).backward(retain_graph=True)

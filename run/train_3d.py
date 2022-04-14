@@ -24,6 +24,10 @@ import json
 import _init_paths
 from core.config import config
 from core.config import update_config
+
+from core.config_t import config_t
+from core.config_t import update_config_t
+
 from core.function import train_3d, validate_3d
 from utils.utils import create_logger
 from utils.utils import save_checkpoint, load_checkpoint, load_model_state
@@ -36,9 +40,13 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Train keypoints network')
     parser.add_argument(
         '--cfg', help='experiment configure file name', required=True, type=str)
+    
+    parser.add_argument(
+        '--cfg_t', help='experiment configure file name for target domain', required=True, type=str)
 
     args, rest = parser.parse_known_args()
     update_config(args.cfg)
+    update_config_t(args.cfg_t)
 
     return args
 
@@ -65,13 +73,23 @@ def main():
 
     logger.info(pprint.pformat(args))
     logger.info(pprint.pformat(config))
+    print("*****************target dataset***************")
+    logger.info(pprint.pformat(config_t))
 
     gpus = [int(i) for i in config.GPUS.split(',')]
     print('=> Loading data ..')
     normalize = transforms.Normalize(
         mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+    
     train_dataset = eval('dataset.' + config.DATASET.TRAIN_DATASET)(
         config, config.DATASET.TRAIN_SUBSET, True,
+        transforms.Compose([
+            transforms.ToTensor(),
+            normalize,
+        ]))
+    
+    train_dataset_t = eval('dataset.' + config_t.DATASET.TRAIN_DATASET)(
+        config_t, config_t.DATASET.TRAIN_SUBSET, True,
         transforms.Compose([
             transforms.ToTensor(),
             normalize,
@@ -82,6 +100,13 @@ def main():
         batch_size=config.TRAIN.BATCH_SIZE * len(gpus),
         shuffle=config.TRAIN.SHUFFLE,
         num_workers=config.WORKERS,
+        pin_memory=True)
+
+    train_loader_t = torch.utils.data.DataLoader(
+        train_dataset_t,
+        batch_size=config_t.TRAIN.BATCH_SIZE * len(gpus),
+        shuffle=config_t.TRAIN.SHUFFLE,
+        num_workers=config_t.WORKERS,
         pin_memory=True)
 
     test_dataset = eval('dataset.' + config.DATASET.TEST_DATASET)(
@@ -130,7 +155,7 @@ def main():
         print('Epoch: {}'.format(epoch))
 
         # lr_scheduler.step()
-        train_3d(config, model, optimizer, train_loader, epoch, final_output_dir, writer_dict)
+        train_3d(config, config_t, model, optimizer, train_loader, train_loader_t, epoch, final_output_dir, writer_dict)
         precision = validate_3d(config, model, test_loader, final_output_dir)
 
         if precision > best_precision:

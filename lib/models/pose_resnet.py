@@ -197,10 +197,10 @@ class PoseResNet(nn.Module):
         x = self.layer3(x)
         x = self.layer4(x)
 
-        x = self.deconv_layers(x)
-        x = self.final_layer(x)
+        y = self.deconv_layers(x)
+        x = self.final_layer(y)
 
-        return x
+        return x, y # y 为输出用作域自适应的特征图
 
     def init_weights(self, pretrained=''):
         this_dir = os.path.dirname(__file__)

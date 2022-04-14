@@ -12,3 +12,4 @@ from dataset.shelf_synthetic import ShelfSynthetic as shelf_synthetic
 from dataset.campus_synthetic import CampusSynthetic as campus_synthetic
 from dataset.shelf import Shelf as shelf
 from dataset.campus import Campus as campus
+from dataset.t_campus import t_Campus as t_campus

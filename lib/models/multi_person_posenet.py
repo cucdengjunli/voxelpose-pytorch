@@ -31,12 +31,20 @@ class MultiPersonPoseNet(nn.Module):
         self.root_id = cfg.DATASET.ROOTIDX
         self.dataset_name = cfg.DATASET.TEST_DATASET
 
-    def forward(self, views=None, meta=None, targets_2d=None, weights_2d=None, targets_3d=None, input_heatmaps=None):
-        if views is not None:
+    def forward(self, views=None, views_t=None, meta=None, targets_2d=None, weights_2d=None, targets_3d=None, input_heatmaps=None):
+        if (views is not None) and (views_t is not None) :
             all_heatmaps = []
+            s_deep_features = []
+            t_deep_features = []
             for view in views:
-                heatmaps = self.backbone(view)
+                heatmaps, deep_features = self.backbone(view)
+                s_deep_features.append(deep_features)
                 all_heatmaps.append(heatmaps)
+                
+            for view in views_t:
+                _ , deep_features = self.backbone(view)
+                t_deep_features.append(deep_features)
+                
         else:
             all_heatmaps = input_heatmaps
 
@@ -92,9 +100,10 @@ class MultiPersonPoseNet(nn.Module):
                             count += 1
                             loss_cord = (loss_cord * (count - 1) +
                                          criterion_cord(single_pose[i:i + 1], targets, True, weights_3d)) / count
+                            # todo：域自适应在batch这里实现
                 del single_pose
 
-        return pred, all_heatmaps, grid_centers, loss_2d, loss_3d, loss_cord
+        return pred, all_heatmaps, grid_centers, loss_2d, loss_3d, loss_cord, s_deep_features, t_deep_features
 
 
 def get_multi_person_pose_net(cfg, is_train=True):

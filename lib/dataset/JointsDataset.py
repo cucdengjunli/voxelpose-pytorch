@@ -319,8 +319,8 @@ class JointsDataset(Dataset):
             # print('---------------------')
             # print(len(joints))
             for n in range(nposes):
-                # human_scale = 2 * self.compute_human_scale(joints[n][:, 0:2] / feat_stride, np.ones((num_joints, 1)))
-                human_scale = 2 * self.compute_human_scale(joints[n][:15, 0:2] / feat_stride, np.ones((num_joints, 1)))
+                human_scale = 2 * self.compute_human_scale(joints[n][:15, 0:2] / feat_stride, np.ones((num_joints, 1))) # 用campus进行测试时再改为15
+                #human_scale = 2 * self.compute_human_scale(joints[n][:, 0:2] / feat_stride, np.ones((num_joints, 1))) # 训练域自适应网络时为了顺利载入campus
                 if human_scale == 0:
                     continue
 
