@@ -58,7 +58,7 @@ def train_3d(config, model, optimizer, loader, epoch, output_dir, writer_dict, d
 
         if loss_cord > 0:
             optimizer.zero_grad()
-            (loss_2d + loss_cord).backward()
+            (loss_2d + loss_cord).backward(retain_graph=True)
             optimizer.step()
 
         if accu_loss_3d > 0 and (i + 1) % accumulation_steps == 0:

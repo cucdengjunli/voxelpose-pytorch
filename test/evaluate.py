@@ -73,13 +73,18 @@ def main():
     with torch.no_grad():
         model = torch.nn.DataParallel(model, device_ids=gpus).cuda()
 
-    test_model_file = os.path.join(final_output_dir, config.TEST.MODEL_FILE)
+    # test_model_file = os.path.join(final_output_dir, config.TEST.MODEL_FILE)
+    # print(final_output_dir)
+    # print(config.TEST.MODEL_FILE)
+    # print(os.path.isfile(test_model_file))
+    # print(test_model_file)
+    test_model_file = '/root/autodl-tmp/pose/voxelpose-pytorch/output/panoptic/multi_person_posenet_50/prn64_cpn80x80x20_960x512_cam5/model_best.pth.tar'
     if config.TEST.MODEL_FILE and os.path.isfile(test_model_file):
         logger.info('=> load models state {}'.format(test_model_file))
         model.module.load_state_dict(torch.load(test_model_file))
     else:
         raise ValueError('Check the model file for testing!')
-
+    print('dao zheli l ')
     model.eval()
     preds = []
     with torch.no_grad():
@@ -87,7 +92,7 @@ def main():
             if 'panoptic' in config.DATASET.TEST_DATASET:
                 pred, _, _, _, _, _ = model(views=inputs, meta=meta)
             elif 'campus' in config.DATASET.TEST_DATASET or 'shelf' in config.DATASET.TEST_DATASET:
-                pred, _, _, _, _, _ = model(meta=meta, input_heatmaps=input_heatmap)
+                pred, _, _, _, _, _ = model(views=inputs,meta=meta)#dengjunli delete heatmap
 
             pred = pred.detach().cpu().numpy()
             for b in range(pred.shape[0]):

@@ -182,6 +182,9 @@ class JointsDataset(Dataset):
         idx = joints_vis[:, 0] == 1
         if np.sum(idx) == 0:
             return 0
+        # print(idx)
+        # print(pose[idx, 0])
+        # print(pose)
         minx, maxx = np.min(pose[idx, 0]), np.max(pose[idx, 0])
         miny, maxy = np.min(pose[idx, 1]), np.max(pose[idx, 1])
         # return np.clip((maxy - miny) * (maxx - minx), 1.0 / 4 * 256**2,
@@ -210,7 +213,7 @@ class JointsDataset(Dataset):
                 (num_joints, self.heatmap_size[1], self.heatmap_size[0]),
                 dtype=np.float32)
             feat_stride = self.image_size / self.heatmap_size
-
+            # print('joints[n]',joints)
             for n in range(nposes):
                 human_scale = 2 * self.compute_human_scale(joints[n] / feat_stride, joints_vis[n])
                 if human_scale == 0:
@@ -311,9 +314,13 @@ class JointsDataset(Dataset):
                 (num_joints, self.heatmap_size[1], self.heatmap_size[0]),
                 dtype=np.float32)
             feat_stride = self.image_size / self.heatmap_size
-
+            # print('---------------------')
+            # print(joints[0][:, 0:2])
+            # print('---------------------')
+            # print(len(joints))
             for n in range(nposes):
-                human_scale = 2 * self.compute_human_scale(joints[n][:, 0:2] / feat_stride, np.ones((num_joints, 1)))
+                # human_scale = 2 * self.compute_human_scale(joints[n][:, 0:2] / feat_stride, np.ones((num_joints, 1)))
+                human_scale = 2 * self.compute_human_scale(joints[n][:15, 0:2] / feat_stride, np.ones((num_joints, 1)))
                 if human_scale == 0:
                     continue
 
