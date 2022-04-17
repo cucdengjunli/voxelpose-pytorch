@@ -31,7 +31,6 @@ TRAIN_LIST = [
     '160906_ian3',
     '160906_band1',
     '160906_band2',
-    '160906_band3',
 ]
 VAL_LIST = ['160906_pizza1', '160422_haggling1', '160906_ian5', '160906_band4']
 
@@ -84,14 +83,14 @@ class Panoptic(JointsDataset):
         if self.image_set == 'train':
             self.sequence_list = TRAIN_LIST
             self._interval = 3
-            self.cam_list = [(0, 12), (0, 6), (0, 23), (0, 13), (0, 3)][:self.num_views]
+            self.cam_list = [(0, 12), (0, 23), (0, 3)][:self.num_views]
             # self.cam_list = list(set([(0, n) for n in range(0, 31)]) - {(0, 12), (0, 6), (0, 23), (0, 13), (0, 3)})
             # self.cam_list.sort()
             self.num_views = len(self.cam_list)
         elif self.image_set == 'validation':
             self.sequence_list = VAL_LIST
             self._interval = 12
-            self.cam_list = [(0, 12), (0, 6), (0, 23), (0, 13), (0, 3)][:self.num_views]
+            self.cam_list = [(0, 12), (0, 23), (0, 3)][:self.num_views]
             self.num_views = len(self.cam_list)
 
         self.db_file = 'group_{}_cam{}.pkl'.format(self.image_set, self.num_views)
