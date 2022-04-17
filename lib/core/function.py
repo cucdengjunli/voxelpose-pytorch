@@ -38,7 +38,7 @@ def train_3d(config, config_t, model, optimizer, loader, loader_t, epoch, output
     i = -1
     
     for (inputs, targets_2d, weights_2d, targets_3d, meta, input_heatmap), (inputs_t, meta_t) in zip(loader, loader_t):
-        
+        ## 设置为如果loader弄完了就出来了
         i += 1
         data_time.update(time.time() - end)
 
@@ -47,18 +47,18 @@ def train_3d(config, config_t, model, optimizer, loader, loader_t, epoch, output
                                                                                                   weights_2d=weights_2d,
                                                                                                   targets_3d=targets_3d[0])
         
-        print('features_s[0].shape:', features_s[0].shape)
-        print('features_t[0].shape:', features_t[0].shape)
-        print('features_s[1].shape:', features_s[1].shape)
-        print('features_t[1].shape:', features_t[1].shape)
-        print('features_s[2].shape:', features_s[2].shape)
-        print('features_t[2].shape:', features_t[2].shape)
-        # print('heatmaps.tyoe():', heatmaps.type())
+#         print('features_s[0].shape:', features_s[0].shape)
+#         print('features_t[0].shape:', features_t[0].shape)
+#         print('features_s[1].shape:', features_s[1].shape)
+#         print('features_t[1].shape:', features_t[1].shape)
+#         # print('features_s[2].shape:', features_s[2].shape)
+#         # print('features_t[2].shape:', features_t[2].shape)
+#         # print('heatmaps.tyoe():', heatmaps.type())
 
 
 
-        print('len features_s:', len(features_s)) # 4
-        print('len features_t:', len(features_t))# 3
+#         print('len features_s:', len(features_s)) # 4
+#         print('len features_t:', len(features_t))# 3
         
         
 
@@ -137,10 +137,10 @@ def validate_3d(config, model, loader, output_dir):
         for i, (inputs, targets_2d, weights_2d, targets_3d, meta, input_heatmap) in enumerate(loader):
             data_time.update(time.time() - end)
             if 'panoptic' in config.DATASET.TEST_DATASET:
-                pred, heatmaps, grid_centers, _, _, _ = model(views=inputs, meta=meta, targets_2d=targets_2d,
+                pred, heatmaps, grid_centers, _, _, _, _, _ = model(views=inputs, meta=meta, targets_2d=targets_2d,
                                                               weights_2d=weights_2d, targets_3d=targets_3d[0])
             elif 'campus' in config.DATASET.TEST_DATASET or 'shelf' in config.DATASET.TEST_DATASET:
-                pred, heatmaps, grid_centers, _, _, _ = model(meta=meta, targets_3d=targets_3d[0],
+                pred, heatmaps, grid_centers, _, _, _, _, _ = model(meta=meta, targets_3d=targets_3d[0],
                                                               input_heatmaps=input_heatmap)
             pred = pred.detach().cpu().numpy()
             for b in range(pred.shape[0]):

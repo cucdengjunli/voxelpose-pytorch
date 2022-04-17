@@ -32,21 +32,28 @@ class MultiPersonPoseNet(nn.Module):
         self.dataset_name = cfg.DATASET.TEST_DATASET
 
     def forward(self, views=None, views_t=None, meta=None, targets_2d=None, weights_2d=None, targets_3d=None, input_heatmaps=None):
-        if (views is not None) and (views_t is not None) :
-            all_heatmaps = []
-            s_deep_features = []
-            t_deep_features = []
-            for view in views:
-                heatmaps, deep_features = self.backbone(view)
-                s_deep_features.append(deep_features)
+        all_heatmaps = []
+        s_deep_features = []
+        t_deep_features = []
+        if views is not None :
+            for view1 in views:
+                heatmaps, deep_features_s = self.backbone(view1)
+                s_deep_features.append(deep_features_s)
                 all_heatmaps.append(heatmaps)
-                
-            for view in views_t:
-                _ , deep_features = self.backbone(view)
-                t_deep_features.append(deep_features)
-                
         else:
             all_heatmaps = input_heatmaps
+        
+        if views_t is not None :
+            for view2 in views_t:
+                _ , deep_features_t = self.backbone(view2)
+                t_deep_features.append(deep_features_t)
+        else:
+            # print("campus已经用完")
+            tensor1 = torch.randint(1, 10, [1, 256, 128, 240])
+            tensor2 = torch.randint(1, 10, [1, 256, 128, 240])
+            tensor3 = torch.randint(1, 10, [1, 256, 128, 240])
+            t_deep_features = [tensor1, tensor2, tensor3]
+
 
         # all_heatmaps = targets_2d
         device = all_heatmaps[0].device
