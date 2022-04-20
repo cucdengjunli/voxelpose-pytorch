@@ -37,6 +37,7 @@ class MultiPersonPoseNet(nn.Module):
             for view in views:
                 heatmaps = self.backbone(view)
                 all_heatmaps.append(heatmaps)
+                print("进入heatmap")
         else:
             all_heatmaps = input_heatmaps
 

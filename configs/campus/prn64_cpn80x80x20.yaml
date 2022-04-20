@@ -2,7 +2,7 @@ CUDNN:
   BENCHMARK: true
   DETERMINISTIC: false
   ENABLED: true
-BACKBONE_MODEL: ''
+BACKBONE_MODEL: 'pose_resnet'
 MODEL: 'multi_person_posenet'
 DATA_DIR: ''
 GPUS: '0'
@@ -38,7 +38,7 @@ NETWORK:
   - 200
   - 160
   SIGMA: 3
-  NUM_JOINTS: 17
+  NUM_JOINTS: 15
   USE_GT: False
 LOSS:
   USE_TARGET_WEIGHT: true

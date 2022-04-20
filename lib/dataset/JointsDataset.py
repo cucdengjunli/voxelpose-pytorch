@@ -313,7 +313,7 @@ class JointsDataset(Dataset):
             feat_stride = self.image_size / self.heatmap_size
 
             for n in range(nposes):
-                human_scale = 2 * self.compute_human_scale(joints[n][:, 0:2] / feat_stride, np.ones((num_joints, 1)))
+                human_scale = 2 * self.compute_human_scale(joints[n][:15, 0:2] / feat_stride, np.ones((num_joints, 1)))
                 if human_scale == 0:
                     continue
 
