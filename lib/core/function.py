@@ -47,17 +47,17 @@ def train_3d(config, config_t, model, optimizer, loader, loader_t, epoch, output
                                                                                                   weights_2d=weights_2d,
                                                                                                   targets_3d=targets_3d[0])
         
-#         print('features_s[0].shape:', features_s[0].shape)
+#         print('features_s[0].shape:', features_s[0].shape) # torch.Size([1, 256, 128, 240])
 #         print('features_t[0].shape:', features_t[0].shape)
 #         print('features_s[1].shape:', features_s[1].shape)
 #         print('features_t[1].shape:', features_t[1].shape)
-#         # print('features_s[2].shape:', features_s[2].shape)
-#         # print('features_t[2].shape:', features_t[2].shape)
+#         print('features_s[2].shape:', features_s[2].shape)
+#         print('features_t[2].shape:', features_t[2].shape)
 #         # print('heatmaps.tyoe():', heatmaps.type())
 
 
 
-#         print('len features_s:', len(features_s)) # 4
+#         print('len features_s:', len(features_s)) # 3
 #         print('len features_t:', len(features_t))# 3
         
         
