@@ -48,11 +48,12 @@ class MultiPersonPoseNet(nn.Module):
                 _ , deep_features_t = self.backbone(view2)
                 t_deep_features.append(deep_features_t)
         else:
-            print("使用自己随机生成的t_deep_features，因为views空")
-            tensor1 = torch.randint(1, 10, [1, 256, 128, 240])
-            tensor2 = torch.randint(1, 10, [1, 256, 128, 240])
-            tensor3 = torch.randint(1, 10, [1, 256, 128, 240])
-            t_deep_features = [tensor1, tensor2, tensor3]
+            print("测试阶段，不用生成目标域特征图")
+        #     print("使用自己随机生成的t_deep_features，因为views空")
+        #     tensor1 = torch.randint(1, 10, [1, 256, 128, 240])
+        #     tensor2 = torch.randint(1, 10, [1, 256, 128, 240])
+        #     tensor3 = torch.randint(1, 10, [1, 256, 128, 240])
+        #     t_deep_features = [tensor1, tensor2, tensor3]
 
 
         # all_heatmaps = targets_2d

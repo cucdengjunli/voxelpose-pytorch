@@ -14,6 +14,8 @@ from utils.vis import save_debug_images_multi
 from utils.vis import save_debug_3d_images
 from utils.vis import save_debug_3d_cubes
 
+import DomainAdaption
+
 logger = logging.getLogger(__name__)
 
 
@@ -41,6 +43,8 @@ def train_3d(config, config_t, model, optimizer, loader, loader_t, epoch, output
         ## 设置为如果loader弄完了就出来了
         i += 1
         data_time.update(time.time() - end)
+        
+        #print("通过loader获取campus和panoptic数据集，长度以campus为准，送入训练")
 
         pred, heatmaps, grid_centers, loss_2d, loss_3d, loss_cord, features_s, features_t = model(views=inputs, views_t=inputs_t, meta=meta,
                                                                                                   targets_2d=targets_2d,
@@ -59,10 +63,25 @@ def train_3d(config, config_t, model, optimizer, loader, loader_t, epoch, output
 
 #         print('len features_s:', len(features_s)) # 3
 #         print('len features_t:', len(features_t))# 3
-        
+
+        DA_on = False
+        Loss_DA = DomainAdaption.randT.randomT()
+        # Loss_DA = loss_2d.mean()
+
+        if DA_on == True:
+            
+            # 将feature由list[tensor,tensor]形式转为，tensor[tensor]
+            tensor_feature_s=torch.stack(features_s,0)
+            tensor_feature_t=torch.stack(features_t,0)
+
+            print('未转换前:feature_t','  type:',type(features_t))
+            print('转换后:tensor_feature_t', '  type',type(tensor_feature_t))
+
+            MMD = DomainAdaption.MMD.MMDLoss()
+            loss_DA = MMD(source=tensor_feature_s, target=tensor_feature_t)
         
 
-        loss_2d = loss_2d.mean()
+        loss_2d = loss_2d.mean() #所有关节权重都一起考虑 是否有改进空间
         loss_3d = loss_3d.mean()
         loss_cord = loss_cord.mean()
 
@@ -74,9 +93,16 @@ def train_3d(config, config_t, model, optimizer, loader, loader_t, epoch, output
 
         # todo: 加上loss 域loss
         
+        # 是否用域自适应训练
+        if DA_on == True:
+            if loss_DA > 0:
+                optimizer.zero_grad()
+                loss_DA.backward()
+                optimizer.step()
+        
         if loss_cord > 0:
             optimizer.zero_grad()
-            (loss_2d + loss_cord).backward(retain_graph=True)
+            (loss_2d + loss_cord).backward(retain_graph=True) # 如果需要2d 3d一起训练需要加上retain_graph=True
             optimizer.step()
 
         if accu_loss_3d > 0 and (i + 1) % accumulation_steps == 0:
@@ -101,10 +127,10 @@ def train_3d(config, config_t, model, optimizer, loader, loader_t, epoch, output
                   'Loss_3d: {loss_3d.val:.7f} ({loss_3d.avg:.7f})\t' \
                   'Loss_cord: {loss_cord.val:.6f} ({loss_cord.avg:.6f})\t' \
                   'Memory {memory:.1f}'.format(
-                    epoch, i, len(loader), batch_time=batch_time,
-                    speed=len(inputs) * inputs[0].size(0) / batch_time.val,
-                    data_time=data_time, loss=losses, loss_2d=losses_2d, loss_3d=losses_3d,
-                    loss_cord=losses_cord, memory=gpu_memory_usage)
+                epoch, i, len(loader), batch_time=batch_time,
+                speed=len(inputs) * inputs[0].size(0) / batch_time.val,
+                data_time=data_time, loss=losses, loss_2d=losses_2d, loss_3d=losses_3d,
+                loss_cord=losses_cord, memory=gpu_memory_usage)
             logger.info(msg)
 
             writer = writer_dict['writer']
@@ -114,16 +140,16 @@ def train_3d(config, config_t, model, optimizer, loader, loader_t, epoch, output
             writer.add_scalar('train_loss', losses.val, global_steps)
             writer_dict['train_global_steps'] = global_steps + 1
 
-            for k in range(len(inputs)):
-                view_name = 'view_{}'.format(k + 1)
-                prefix = '{}_{:08}_{}'.format(
-                    os.path.join(output_dir, 'train'), i, view_name)
-                save_debug_images_multi(config, inputs[k], meta[k], targets_2d[k], heatmaps[k], prefix)
-            prefix2 = '{}_{:08}'.format(
-                os.path.join(output_dir, 'train'), i)
+#             for k in range(len(inputs)):
+#                 view_name = 'view_{}'.format(k + 1)
+#                 prefix = '{}_{:08}_{}'.format(
+#                     os.path.join(output_dir, 'train'), i, view_name)
+#                 save_debug_images_multi(config, inputs[k], meta[k], targets_2d[k], heatmaps[k], prefix)
+#             prefix2 = '{}_{:08}'.format(
+#                 os.path.join(output_dir, 'train'), i)
 
-            save_debug_3d_cubes(config, meta[0], grid_centers, prefix2)
-            save_debug_3d_images(config, meta[0], pred, prefix2)
+#             save_debug_3d_cubes(config, meta[0], grid_centers, prefix2)
+#             save_debug_3d_images(config, meta[0], pred, prefix2)
 
 
 def validate_3d(config, model, loader, output_dir):
