@@ -179,7 +179,9 @@ class Campus(JointsDataset):
 
         for i, fi in enumerate(self.frame_range):
             pred_coco = preds[i].copy()
-            pred_coco = pred_coco[pred_coco[:, 0, 3] >= 0, :, :3]
+            #pred_coco = pred_coco[pred_coco[:, 0, 3] >= 0, :, :3]
+            # 用camera3 panoptic模型时要注释掉上面这行
+            
             # ittt=90
             # for p in copy.deepcopy(pred_coco[:, :, :3]):
             #     if ittt == 90:
@@ -244,6 +246,7 @@ class Campus(JointsDataset):
         campus_pose = np.zeros((14, 3))
         # coco2campus = np.array([16, 14, 12, 11, 13, 15, 10, 8, 6, 5, 7, 9])
         coco2campus = np.array([14, 13, 12, 6, 7, 8, 11, 10, 9, 3, 4, 5])
+        # 调整了panoptic数据
         campus_pose[0: 12] += coco_pose[coco2campus]
 
         mid_sho = (coco_pose[3] + coco_pose[9]) / 2  # L and R shoulder

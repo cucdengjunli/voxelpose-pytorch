@@ -2,6 +2,8 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+
+
 import time
 import logging
 import os
@@ -16,8 +18,10 @@ from utils.vis import save_debug_3d_cubes
 
 import DomainAdaption
 
-logger = logging.getLogger(__name__)
 
+logger = logging.getLogger(__name__)
+loss_fn_domain = torch.nn.NLLLoss()
+# dengjunli 损失函数域
 
 def train_3d(config, config_t, model, optimizer, loader, loader_t, epoch, output_dir, writer_dict, device=torch.device('cuda'), dtype=torch.float):
     batch_time = AverageMeter()
@@ -64,23 +68,52 @@ def train_3d(config, config_t, model, optimizer, loader, loader_t, epoch, output
 #         print('len features_s:', len(features_s)) # 3
 #         print('len features_t:', len(features_t))# 3
 
-        DA_on = False
+        DA_on = True
         Loss_DA = DomainAdaption.randT.randomT()
         # Loss_DA = loss_2d.mean()
 
         if DA_on == True:
             
             # 将feature由list[tensor,tensor]形式转为，tensor[tensor]
-            tensor_feature_s=torch.stack(features_s,0)
+            tensor_feature_s=torch.stack(features_s,0) 
             tensor_feature_t=torch.stack(features_t,0)
+            
+            # 压缩掉维度为1的维度
+            tensor_feature_t=torch.squeeze(tensor_feature_t)
+            tensor_feature_s=torch.squeeze(tensor_feature_s)
 
-            print('未转换前:feature_t','  type:',type(features_t))
-            print('转换后:tensor_feature_t', '  type',type(tensor_feature_t))
+            # print('未转换前:feature_t','  type:',type(features_t), 'features_t[0].shape:', features_t[0].shape)
+            # print('转换后:tensor_feature_t', 'type',type(tensor_feature_t),'tensor_feature_t.shape:', tensor_feature_t.shape)
+            # print('转换后:tensor_feature_s', 'type',type(tensor_feature_s),'tensor_feature_s.shape:', tensor_feature_s.shape)
 
-            MMD = DomainAdaption.MMD.MMDLoss()
-            loss_DA = MMD(source=tensor_feature_s, target=tensor_feature_t)
-        
 
+            #MMD = DomainAdaption.MMD.MMDLoss()
+            
+            # CORAL = DomainAdaption.DeepCoral.CORAL_loss()
+            #loss_DA = MMD(source=tensor_feature_s, target=tensor_feature_t)
+            # loss_DA = DomainAdaption.DeepCoral.CORAL_loss(tensor_feature_s, tensor_feature_t)
+            # loss_DA = DomainAdaption.MMD_numpy.MMD(tensor_feature_s, tensor_feature_t)
+            
+            adv = DomainAdaption.adv.DACNN().to(device)
+
+            y_s_domain = torch.zeros(1, dtype=torch.long)
+            y_t_domain = torch.ones(1, dtype=torch.long)
+
+            s_domain_pred = adv(features=tensor_feature_s, grl_lambda=1.0)
+            t_domain_pred = adv(features=tensor_feature_t, grl_lambda=1.0)
+            
+            # print('域损失 s_domain_pred  y_s_domain')
+            # print(s_domain_pred)
+            # print(y_s_domain)
+
+            loss_s_domain = loss_fn_domain(s_domain_pred, y_s_domain.to(device))
+            loss_t_domain = loss_fn_domain(t_domain_pred, y_t_domain.to(device))
+
+            loss_DA = loss_s_domain + loss_t_domain
+            
+            print(loss_DA)
+
+            
         loss_2d = loss_2d.mean() #所有关节权重都一起考虑 是否有改进空间
         loss_3d = loss_3d.mean()
         loss_cord = loss_cord.mean()
@@ -93,16 +126,16 @@ def train_3d(config, config_t, model, optimizer, loader, loader_t, epoch, output
 
         # todo: 加上loss 域loss
         
-        # 是否用域自适应训练
-        if DA_on == True:
-            if loss_DA > 0:
-                optimizer.zero_grad()
-                loss_DA.backward()
-                optimizer.step()
+        # # 是否用域自适应训练
+        # if DA_on == True:
+        #     if loss_DA > 0:
+        #         optimizer.zero_grad()
+        #         loss_DA.backward()
+        #         optimizer.step()
         
-        if loss_cord > 0:
+        if (loss_cord > 0 and DA_on == True):
             optimizer.zero_grad()
-            (loss_2d + loss_cord).backward(retain_graph=True) # 如果需要2d 3d一起训练需要加上retain_graph=True
+            (loss_2d + loss_cord + loss_DA).backward(retain_graph=True) # 如果需要2d 3d一起训练需要加上retain_graph=True
             optimizer.step()
 
         if accu_loss_3d > 0 and (i + 1) % accumulation_steps == 0:

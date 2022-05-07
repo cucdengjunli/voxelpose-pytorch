@@ -78,7 +78,9 @@ def main():
     # print(config.TEST.MODEL_FILE)
     # print(os.path.isfile(test_model_file))
     # print(test_model_file)
-    test_model_file = '/root/autodl-tmp/pose/voxelpose-pytorch/output/panoptic/multi_person_posenet_50/prn64_cpn80x80x20_960x512_cam5/model_best.pth.tar'
+    test_model_file = '/root/autodl-tmp/voxelpose-pytorch/output/panoptic/multi_person_posenet_50/prn64_cpn80x80x20_960x512_cam3_domain/model_best.pth.tar'
+    
+    ##通过修改这段话，可以指定用哪个model来进行测试
     if config.TEST.MODEL_FILE and os.path.isfile(test_model_file):
         logger.info('=> load models state {}'.format(test_model_file))
         model.module.load_state_dict(torch.load(test_model_file))
@@ -90,9 +92,9 @@ def main():
     with torch.no_grad():
         for i, (inputs, targets_2d, weights_2d, targets_3d, meta, input_heatmap) in enumerate(tqdm(test_loader)):
             if 'panoptic' in config.DATASET.TEST_DATASET:
-                pred, _, _, _, _, _ = model(views=inputs, meta=meta)
+                pred, _, _, _, _, _, _, _ = model(views=inputs, meta=meta)
             elif 'campus' in config.DATASET.TEST_DATASET or 'shelf' in config.DATASET.TEST_DATASET:
-                pred, _, _, _, _, _ = model(views=inputs,meta=meta)#dengjunli delete heatmap
+                pred, _, _, _, _, _, _, _ = model(views=inputs,meta=meta)#dengjunli delete heatmap
 
             pred = pred.detach().cpu().numpy()
             for b in range(pred.shape[0]):
